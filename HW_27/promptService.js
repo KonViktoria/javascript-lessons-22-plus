@@ -34,8 +34,10 @@ export function createBasePromptByRole(user){
     }
     throw new Error(`Access denied ${user.role}`);
 }
-export  function formatProductsForPromt(product){
-return formatProductsForPromt.map(product => `${product.name}: ${product.count}`).join('\n');
+export function formatProductsForPrompt(products) {
+  return products
+    .map(product => ` ${product.name}: ${product.count}`)
+    .join("\n");
 }
 export function createPrompt(basePrompt, dishTitle, products) {
     if(!dishTitle.trim()){
