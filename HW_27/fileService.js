@@ -1,6 +1,9 @@
-import { readFile } from "node:fs/promises";
-
 export async function readFromJsonFile(filePath) {
-  const fileData = await readFile(filePath, "utf-8");
-  return JSON.parse(fileData);
+    const response = await fetch(filePath)
+    if(!response.ok){
+        throw new Error("File not found");
+    }
+    console.log(response.status)
+    return await response.json()
+
 }

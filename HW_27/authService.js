@@ -1,21 +1,28 @@
-import { ROLES } from "./config.js";
+import {ROLES} from "./config.js";
 
- 
-   const user = {
-  name: "John",
-  role: ROLES.USER,
-};
+export function getUserByName(users, userName) {
+    const clearName = userName.trim().toLowerCase();
+    return users.find(user => user.name.toLowerCase() === clearName);
+}
+export function getAuthenticatedUser(
+    users,
+    userName
+) {
 
-const admin = {
-  name: "Bill",
-  role: ROLES.ADMIN,
-};
+    const user =
+        getUserByName(
+            users,
+            userName
+        );
 
-const user2 = {
-  name: "Bill",
-  role: "SUPER_ADMIN",
-};
 
-export function getAuthenticatedUser() {
-  return admin;
+    if (user) {
+        return user;
+    }
+
+
+    return {
+        name: userName,
+        role: ROLES.GUEST
+    };
 }

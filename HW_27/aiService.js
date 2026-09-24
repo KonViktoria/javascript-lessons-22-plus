@@ -1,25 +1,91 @@
-import {GoogleGenAI} from "@google/genai";
-import {AI_MODEL} from "./config.js";
-import "dotenv/config";
-import * as dotenv from "dotenv";
+import {
+    AI_MODEL,
+    GEMINI_API_KEY
+} from "./config.js";
 
-dotenv.config({
-    path: "../.env",
-});
 
 export async function askAi(prompt) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-        throw new Error(' API key not found');
+
+    if (!GEMINI_API_KEY) {
+
+        throw new Error(
+            "API key not found"
+        );
     }
-    const genAi = new GoogleGenAI({
-        apiKey
-    });
 
-    const response = await genAi.models.generateContent({
-        model: AI_MODEL,
-        contents: prompt,
-    });
 
-    return response.text;
+    const url =
+        `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL}:generateContent`;
+
+
+    const response =
+        await fetch(
+            url,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json",
+
+                    "x-goog-api-key":
+                    GEMINI_API_KEY
+                },
+
+                body:
+                    JSON.stringify({
+                        contents: [
+                            {
+                                parts: [
+                                    {
+                                        text: prompt
+                                    }
+                                ]
+                            }
+                        ]
+                    })
+            }
+        );
+
+
+    if (!response.ok) {
+
+        const errorData =
+            await response.json();
+
+
+        console.error(
+            "Gemini error:",
+            errorData
+        );
+
+
+        throw new Error(
+            errorData.error?.message ||
+            `Gemini error: ${response.status}`
+        );
+    }
+
+
+    const data =
+        await response.json();
+
+
+    const answer =
+        data
+            ?.candidates?.[0]
+            ?.content
+            ?.parts?.[0]
+            ?.text;
+
+
+    if (!answer) {
+
+        throw new Error(
+            "No answer from Gemini"
+        );
+    }
+
+
+    return answer;
 }

@@ -1,22 +1,207 @@
-import {getAuthenticatedUser} from "./authService.js";
-import {FRIDGE_FILE} from "./config.js";
-import path from "node:path";
-import {createBasePromptByRole, createPrompt} from "./promptService.js";
-import {readFromJsonFile} from "./fileService.js";
-import {askAi} from "./aiService.js";
+import {
+    readFromJsonFile
+} from "./fileService.js";
 
-try{const authenticatedUser = getAuthenticatedUser();
-    const filePath = path.resolve(FRIDGE_FILE);
-    const products = await readFromJsonFile(filePath);
-    const basePrompt = createBasePromptByRole(authenticatedUser);
-    const prompt = createPrompt(basePrompt, "картофельное пюре" ,products);
-    const answer = await askAi(prompt);
-    console.log(answer);
-}catch(e){
-    console.log(e.message);
+import {
+    getAuthenticatedUser
+} from "./authService.js";
+
+import {
+    FRIDGE_FILE,
+    USERS_FILE
+} from "./config.js";
+
+import {
+    createBasePromptByRole,
+    createPrompt
+} from "./promptService.js";
+
+import {
+    askAi
+} from "./aiService.js";
+
+
+const form =
+    document.getElementById(
+        "searchForm"
+    );
+
+const userNameInput =
+    document.getElementById(
+        "userName"
+    );
+
+const dishTitleInput =
+    document.getElementById(
+        "dishTitle"
+    );
+
+const result =
+    document.getElementById(
+        "result"
+    );
+
+const errorModal =
+    document.getElementById(
+        "errorModal"
+    );
+
+const errorMessage =
+    document.getElementById(
+        "errorMessage"
+    );
+
+const closeModal =
+    document.getElementById(
+        "closeModal"
+    );
+
+
+function validateInput(
+    userName,
+    dishTitle
+) {
+
+    if (!userName) {
+
+        throw new Error(
+            "User name is required"
+        );
+    }
+
+
+    if (!dishTitle) {
+
+        throw new Error(
+            "Dish title is required"
+        );
+    }
 }
-//Создать файл index.html который бы:
-//1 По имени пользователя определял бы является ли он существующим и если нет, то давал бы ему новую роль Guest
-//2 C клавиатуры надо ввести название блюда
-//3 По кнопке искать
-//4 Вывести ответ на экран  В случае если возникнет ERROR  - вывести модальное окно
+
+
+function showError(message) {
+
+    errorMessage.textContent =
+        message;
+
+    errorModal.showModal();
+}
+
+
+async function searchDish(
+    userName,
+    dishTitle
+) {
+
+    const users =
+        await readFromJsonFile(
+            USERS_FILE
+        );
+
+
+    const authenticatedUser =
+        getAuthenticatedUser(
+            users,
+            userName
+        );
+
+
+
+
+    const products =
+        await readFromJsonFile(
+            FRIDGE_FILE
+        );
+
+
+    const basePrompt =
+        createBasePromptByRole(
+            authenticatedUser
+        );
+
+
+    const prompt =
+        createPrompt(
+            basePrompt,
+            dishTitle,
+            products
+        );
+
+
+    return askAi(
+        prompt
+    );
+}
+
+
+async function handleSearch(event) {
+
+    event.preventDefault();
+
+
+    const userName =
+        userNameInput
+            .value
+            .trim();
+
+
+    const dishTitle =
+        dishTitleInput
+            .value
+            .trim();
+
+
+    try {
+
+        validateInput(
+            userName,
+            dishTitle
+        );
+
+
+        result.textContent =
+            "Получаем ответ...";
+
+
+        const answer =
+            await searchDish(
+                userName,
+                dishTitle
+            );
+
+
+        result.textContent =
+            answer;
+
+
+    } catch (error) {
+
+        console.error(
+            "ERROR:",
+            error
+        );
+
+
+        result.textContent = "";
+
+
+        showError(
+            error.message
+        );
+    }
+}
+
+
+form.addEventListener(
+    "submit",
+    handleSearch
+);
+
+
+closeModal.addEventListener(
+    "click",
+
+    () => {
+        errorModal.close();
+    }
+);
